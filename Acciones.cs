@@ -1,67 +1,109 @@
-﻿using System;
+﻿using ClosedXML.Excel;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ClosedXML.Excel;
+using WindowsFormsApp2;
 
-namespace WindowsFormsApp2
+namespace Exportar
 {
     internal class Acciones
     {
-        private List<Alumno> alumnoList = new List<Alumno>
-        {
-            
-        };
-        public List<Alumno>Mostrar()
-        {
-            return alumnoList;
-        }
-        public bool ExportarExcel()
+        private List<Alumno> alumnoList = new List<Alumno>();
+        correo correo = new correo();
+
+        public List<Alumno> Mostrar()
         {
             try
             {
-                var wb = new XLWorkbook();
-                var ws = wb.Worksheets.Add("Alumnos");
+                return alumnoList;
+
+            }
+            catch (Exception ex)
+            {
+                correo.EnviarCorreo(ex.ToString());
+                throw;
+            }
+        }
+        public bool ExportaraExcel()
+        {
+            try
+            {
+                var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Alumnos");
 
                 // Encabezados
-                ws.Cell(1, 1).Value = "Nombre";
-                ws.Cell(1, 2).Value = "Edad";
-                ws.Cell(1, 3).Value = "Carrera";
-                ws.Cell(1, 4).Value = "Matricula";
-                ws.Cell(1, 5).Value = "Fecha Ingreso";
+                worksheet.Cell(1, 0).Value = "Nombre";
+                worksheet.Cell(1, 2).Value = "Edad";
+                worksheet.Cell(1, 3).Value = "Carrera";
+                worksheet.Cell(1, 4).Value = "Matricula";
+                worksheet.Cell(1, 5).Value = "Fecha de Ingreso";
 
                 // Llenar datos
                 for (int i = 0; i < alumnoList.Count; i++)
                 {
                     var alumno = alumnoList[i];
-                    ws.Cell(i + 2, 1).Value = alumno.Nombre;
-                    ws.Cell(i + 2, 2).Value = alumno.Edad;
-                    ws.Cell(i + 2, 3).Value = alumno.Carrera;
-                    ws.Cell(i + 2, 4).Value = alumno.Matricula;
-                    ws.Cell(i + 2, 5).Value = alumno.Fechadenacimiento.ToShortDateString();
+                    worksheet.Cell(i + 2, 1).Value = alumno.Nombre;
+                    worksheet.Cell(i + 2, 2).Value = alumno.Edad;
+                    worksheet.Cell(i + 2, 3).Value = alumno.Carrera;
+                    worksheet.Cell(i + 2, 4).Value = alumno.Matricula;
+                    worksheet.Cell(i + 2, 5).Value = alumno.Fechadenacimiento.ToShortDateString();
                 }
 
-                // Guardar archivo en escritorio
+                // Obtener ruta del escritorio
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
-                string filePath = Path.Combine(desktopPath, "Alumnos.xlsx");
-                wb.SaveAs(filePath);
+                string filePath = Path.Combine(desktopPath, "ListaAlumnos.xlsx");
+
+                // Guardar archivo
+                workbook.SaveAs(filePath);
 
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                correo.EnviarCorreo(ex.ToString());
                 return false;
             }
-
-
         }
-        public bool importarExcel()
+        public bool ImportardeExcel()
         {
+            try
+            {
+                string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+                string filePath = Path.Combine(desktopPath, "ListaAlumnos.xlsx");
 
+                if (!File.Exists(filePath))
+                    return false;
+
+                var newList = new List<Alumno>();
+
+                using (var workbook = new XLWorkbook(filePath))
+                {
+                    var worksheet = workbook.Worksheet("Alumnos");
+                    var rows = worksheet.RowsUsed().Skip(1); // Omitir encabezados
+
+                    foreach (var row in rows)
+                    {
+                        string nombre = row.Cell(1).GetString();
+                        int edad = int.Parse(row.Cell(2).GetValue<string>());
+                        string carrera = row.Cell(3).GetString();
+                        int matricula = int.Parse(row.Cell(4).GetValue<string>());
+                        DateTime fechaIngreso = DateTime.Parse(row.Cell(5).GetString());
+
+                        newList.Add(new Alumno(nombre, edad, carrera, matricula, fechaIngreso));
+                    }
+                }
+
+                alumnoList = newList;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                correo.EnviarCorreo(ex.ToString());
+                return false;
+            }
         }
-
     }
 }

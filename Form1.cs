@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Exportar;
 
 namespace WindowsFormsApp2
 {
@@ -25,7 +26,7 @@ namespace WindowsFormsApp2
 
         private void btnExportar_Click(object sender, EventArgs e)
         {
-            if (acc.ExportarExcel())
+            if (acc.ExportaraExcel())
                 MessageBox.Show("Exportado con exito");
             else
                 MessageBox.Show("Fallo al exportarlo");
@@ -33,7 +34,7 @@ namespace WindowsFormsApp2
 
         private void BTNimportar_Click(object sender, EventArgs e)
         {
-            if (acc.ImportarExcel())
+            if (acc.ImportardeExcel())
                 MessageBox.Show("importado con exito");
             else
                 MessageBox.Show("Fallo al importarlo");
